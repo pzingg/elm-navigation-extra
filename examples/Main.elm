@@ -20,6 +20,10 @@ main =
 -- MODEL
 
 
+{- This example shows how to maintain application state, like the "counter"
+and also store the location history. We also must keep the state of the
+router (locations that are created from wihin our program).
+-}
 type alias Model =
   { counter : Int
   , history : List Navigation.Location
@@ -51,16 +55,10 @@ type Msg
   | SetCount Int
 
 
-{- We are just storing the location in our history in this example, but
-normally, you would use a package like evancz/url-parser to parse the path
-or hash into nicely structured Elm values.
-
-    <http://package.elm-lang.org/packages/evancz/url-parser/latest>
-
--}
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        -- Location changed message.
         LocationChanged location ->
             let
                 ( newRouter, external ) =
@@ -75,29 +73,39 @@ update msg model =
                 Router.processLocation external
                     update location2messages location newModel []
 
-        Increment ->
+        -- Non-location messages that may change model state
+        -- call a sub-function that returns a new model with
+        -- a router updated from the `Router.urlChanged` function.
+        _ ->
             let
-                newModel = { model | counter = model.counter + 1 }
-                ( newRouter, cmd ) =
+                ( newModel, cmd ) = updateModelState msg model
+                ( newRouter, routerCmd ) =
                     Router.urlChanged model.router (delta2url model newModel)
             in
-                ( { newModel | router = newRouter }, cmd )
+                ( { newModel | router = newRouter }
+                , Cmd.batch [ cmd, routerCmd ]
+                )
+
+
+{-| This function handles just the non-router parts of our model,
+and does not emit any commands.
+-}
+updateModelState : Msg -> Model -> (Model, Cmd Msg)
+updateModelState msg model =
+    case msg of
+        Increment ->
+            ( { model | counter = model.counter + 1 }, Cmd.none )
 
         Decrement ->
-            let
-                newModel = { model | counter = model.counter - 1 }
-                ( newRouter, cmd ) =
-                    Router.urlChanged model.router (delta2url model newModel)
-            in
-                ( { newModel | router = newRouter }, cmd )
+            ( { model | counter = model.counter - 1 }, Cmd.none )
 
         SetCount counter ->
-            let
-                newModel = { model | counter = counter }
-                ( newRouter, cmd ) =
-                    Router.urlChanged model.router (delta2url model newModel)
-            in
-                ( { newModel | router = newRouter }, cmd )
+            ( { model | counter = counter }, Cmd.none )
+
+        _ ->
+            -- other messages (including LocationChanged) that
+            -- don't affect state of non-router parts of our model
+            ( model, Cmd.none )
 
 
 {-| `delta2url` will be called when your model changes. The first parameter is
@@ -135,6 +143,12 @@ delta2url _ current =
 {-|`location2messages` will be called when a change in the browser's URL is
 detected, either because the user followed a link, typed something in the
 location bar, or used the back or forward buttons.
+
+We use the `Navigation.Builder` module to help us parse the location, but
+you could also use another package like
+[`evancz/url-parser`](http://package.elm-lang.org/packages/evancz/url-parser/latest)
+to parse the path or hash into nicely structured Elm values, and then create
+a list of state-changing messages from those values.
 
 Note that this function will *not* be called when your `delta2url` method
 initiates a `UrlChange` -- since in that case, the relevant change in the
