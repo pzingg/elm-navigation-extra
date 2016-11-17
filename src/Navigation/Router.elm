@@ -175,9 +175,8 @@ Parameters:
 * `location` is the `Navigation.Location` value received through your
 program's `LocationChanged` message.
 
-The function returns a `Tuple` consisting of the updated
-`Navigation.Router.Model` and a `Bool` flag,
-`external`, indicating if the change was from the "outside",
+The function returns a `Tuple` consisting of the updated `Navigation.Router.Model`
+and a `Bool` flag, `external`, indicating if the change was from the "outside",
 i.e. from the user clicking on a link, typing in the location bar,
 or following a bookmark.
 
@@ -277,11 +276,9 @@ Then in your program's `update` function, if your model changes,
 call `delta2url` with two parameters. The first parameter is
 the model's previous value, and the second is the model's new value.
 
-Your function should return a `Just Router.UrlChange` if a new URL should be
-displayed in the browser's location bar (or `Nothing` if no change to the URL
-is needed). This library will check the current URL before setting a new one,
-so you need not worry about setting duplicate URLs -- that will be
-automatically avoided.
+Your `delta2url` function should return a `Just Navigation.Router.UrlChange`
+if a new URL should be displayed in the browser's location bar;
+or `Nothing` if no change to the URL is needed.
 
 The reason we provide both the previous and current model for your
 consideration is that sometimes you may want to do something differently
@@ -296,6 +293,11 @@ Instead use the `Navigation.Router.locationChanged` and
 After calling `delta2url`, step two of processing a state change that
 may result in a new URL to be added to your browser's location bar is
 to then call this function, `Navigation.Router.urlChanged`.
+
+The `urlChanged` function will check the `urlChange` parameter against
+the value of the last URL received by the router before setting a new one,
+so you need not worry about setting duplicate URLs -- that will be
+automatically avoided.
 
 Parameters:
 
