@@ -6,6 +6,10 @@ import Navigation.Router as Router
 import Navigation.Builder as Builder
 
 
+
+{-| This example program is based on the one contained in the Elm 0.18
+[`elm-lang/navigation` package](https://github.com/elm-lang/navigation/tree/master/examples).
+-}
 main : Program Never Model Msg
 main =
   Navigation.program LocationChanged
@@ -55,15 +59,22 @@ type Msg
   | SetCount Int
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
+
+{-| Our update function separates the processing of LocationChanged
+messages from the processing of other, "internal" messages.
+-}
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+
         -- Location changed message.
         LocationChanged location ->
             let
                 ( newRouter, external ) =
                     Router.locationChanged model.router location
 
+                -- We keep the location history as an example, but
+                -- don't change our URL based on the history.
                 newModel =
                     { model
                     | history = location :: model.history
@@ -78,34 +89,42 @@ update msg model =
         -- a router updated from the `Router.urlChanged` function.
         _ ->
             let
-                ( newModel, cmd ) = updateModelState msg model
-                ( newRouter, routerCmd ) =
-                    Router.urlChanged model.router (delta2url model newModel)
+                ( newModel, cmd, mightChangeUrl ) = updateModelState msg model
             in
-                ( { newModel | router = newRouter }
-                , Cmd.batch [ cmd, routerCmd ]
-                )
+                if mightChangeUrl then
+                    let
+                        ( newRouter, routerCmd ) =
+                            Router.urlChanged model.router (delta2url model newModel)
+                    in
+                        ( { newModel | router = newRouter }
+                        , Cmd.batch [ cmd, routerCmd ]
+                        )
+                else
+                    ( newModel, cmd )
 
 
-{-| This function handles just the non-router parts of our model,
-and does not emit any commands.
+
+{-| This function handles just the non-router parts of our model.
+Return a False entry in the tuple if there is no change to the model,
+or if the change will not affect the URL to be pushed to the browser's history.
 -}
-updateModelState : Msg -> Model -> (Model, Cmd Msg)
+updateModelState : Msg -> Model -> ( Model, Cmd Msg, Bool )
 updateModelState msg model =
     case msg of
         Increment ->
-            ( { model | counter = model.counter + 1 }, Cmd.none )
+            ( { model | counter = model.counter + 1 }, Cmd.none, True )
 
         Decrement ->
-            ( { model | counter = model.counter - 1 }, Cmd.none )
+            ( { model | counter = model.counter - 1 }, Cmd.none, True )
 
         SetCount counter ->
-            ( { model | counter = counter }, Cmd.none )
+            ( { model | counter = counter }, Cmd.none, True )
 
         _ ->
             -- other messages (including LocationChanged) that
             -- don't affect state of non-router parts of our model
-            ( model, Cmd.none )
+            ( model, Cmd.none, False )
+
 
 
 {-| `delta2url` will be called when your model changes. The first parameter is
