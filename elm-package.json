@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "1.1.0",
     "summary": "Router for single-page-apps in Elm",
     "repository": "https://github.com/pzingg/elm-navigation-extra.git",
     "license": "BSD3",
@@ -7,7 +7,8 @@
         "src"
     ],
     "exposed-modules": [
-        "Navigation.Router"
+        "Navigation.Router",
+        "Navigation.Builder"
     ],
     "dependencies": {
         "elm-lang/core": "5.0.0 <= v < 6.0.0",
