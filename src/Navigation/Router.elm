@@ -264,8 +264,8 @@ route =
     UrlParser.map SetCount (UrlParser.s "!" </> UrlParser.int)
 
 
-location2messagesUsingUrlParser : Navigation.Location -> List Msg
-location2messagesUsingUrlParser location =
+location2messages : Navigation.Location -> List Msg
+location2messages location =
     let
         maybeMsg = UrlParser.parseHash route location
     in
@@ -273,7 +273,7 @@ location2messagesUsingUrlParser location =
             Just msg ->
                 [ msg ]
 
-            _ ->
+            Nothing ->
                 []
 ```
 

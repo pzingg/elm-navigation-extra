@@ -207,7 +207,7 @@ location2messagesUsingUrlParser location =
             Just msg ->
                 [ msg ]
 
-            _ ->
+            Nothing ->
                 []
 
 
