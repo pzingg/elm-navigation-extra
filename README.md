@@ -174,8 +174,12 @@ the value of the counter, like `#!/2`, and `location2messages`
 parses the hash into a list and generates a `SetCount Int` message (if
 the first member of the list is an integer) to update the counter.
 
-The hash-building and -parsing make use of the `Navigation.Builder` module
-(which is identical to the `Builder` in `elm-lang/elm-route-url`).
+The example shows how to build and parse the location hash two ways:
+
+* with the `UrlParser` module from the `evancz/url-parser` package.
+
+* or with the included `Navigation.Builder` module (which is identical
+    to the `Builder` module from the `rgrempel/elm-route-url` package).
 
 
 ## API

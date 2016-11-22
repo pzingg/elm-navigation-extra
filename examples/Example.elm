@@ -2,9 +2,11 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Navigation
-import Navigation.Router as Router
-import Navigation.Builder as Builder
+import Navigation.Router as Router exposing (UrlChange, HistoryEntry(..))
 
+-- You probably need only one of these
+import UrlParser exposing ((</>))
+import Navigation.Builder as Builder
 
 
 {-| This example program is based on the one contained in the Elm 0.18
@@ -144,13 +146,20 @@ For instance, it might make the difference between using `NewEntry` or
 
 Note that this function will *not* be called when processing the
 `LocationChanged` message.
+
+Here are two examples of how to implement this, one using the UrlParser
+module and the other our Navigation.Builder module.
 -}
-delta2url : Model -> Model -> Maybe Router.UrlChange
+delta2urlUsingUrlParser : Model -> Model -> Maybe UrlChange
+delta2urlUsingUrlParser _ current =
+    Just <|
+        { entry = NewEntry
+        , url = "#!/" ++ (toString current.counter)
+        }
+
+
+delta2urlUsingBuilder : Model -> Model -> Maybe UrlChange
 delta2url _ current =
-    -- We're using a `Builder` to build up the possible change. You don't
-    -- have to do that ... you can construct a `UrlChange` however you like.
-    --
-    -- So, as the last step, we map our possible `Builder` to a `UrlChange`.
     let
         pathBuilder = Builder.builder
             |> Builder.replacePath [ toString current.counter ]
@@ -158,13 +167,15 @@ delta2url _ current =
         Just <| Builder.toHashChange pathBuilder
 
 
+delta2Url : Model -> Model -> Maybe UrlChange
+delta2Url = deltaUrlUsingParser
+
 
 {-|`location2messages` will be called when a change in the browser's URL is
 detected, either because the user followed a link, typed something in the
 location bar, or used the back or forward buttons.
 
-We use the `Navigation.Builder` module to help us parse the location, but
-you could also use another package like
+We use
 [`evancz/url-parser`](http://package.elm-lang.org/packages/evancz/url-parser/latest)
 to parse the path or hash into nicely structured Elm values, and then create
 a list of state-changing messages from those values.
@@ -176,9 +187,36 @@ model has already occurred.
 Your function should return a list of messages that your `update` function
 can respond to. Those messages will be fed into your app, to produce the
 changes to the model that the new URL implies.
+
+Here are two examples of how to implement this, one using the UrlParser
+module and the other our Navigation.Builder module.  To work with UrlParser,
+you have to create a mapping. If the mapping fails, the parseHash method
+will return Nothing.
 -}
-location2messages : Navigation.Location -> List Msg
-location2messages location =
+route : UrlParser.Parser (Msg -> a) a
+route =
+    UrlParser.map SetCount (UrlParser.s "!" </> UrlParser.int)
+
+
+location2messagesUsingUrlParser : Navigation.Location -> List Msg
+location2messagesUsingUrlParser location =
+    let
+        maybeMsg = UrlParser.parseHash route location
+    in
+        case maybeMsg of
+            Just msg ->
+                [ msg ]
+
+            _ ->
+                []
+
+
+
+{-| To work with Navigation.Builder, you examine the path list and parse
+the elements yourself.
+-}
+location2messagesUsingBuilder : Navigation.Location -> List Msg
+location2messagesUsingBuilder location =
     let
         path = Builder.path <| Builder.fromHash location.href
     in
@@ -196,6 +234,10 @@ location2messages location =
             _ ->
                 -- If nothing provided for this part of the URL, return empty list
                 []
+
+
+location2messages : Navigation.Location -> List Msg
+location2messages = location2messagesUsingUrlParser
 
 
 
