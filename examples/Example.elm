@@ -159,7 +159,7 @@ delta2urlUsingUrlParser _ current =
 
 
 delta2urlUsingBuilder : Model -> Model -> Maybe UrlChange
-delta2url _ current =
+delta2urlUsingBuilder _ current =
     let
         pathBuilder = Builder.builder
             |> Builder.replacePath [ toString current.counter ]
@@ -167,8 +167,8 @@ delta2url _ current =
         Just <| Builder.toHashChange pathBuilder
 
 
-delta2Url : Model -> Model -> Maybe UrlChange
-delta2Url = deltaUrlUsingParser
+delta2url : Model -> Model -> Maybe UrlChange
+delta2url = delta2urlUsingUrlParser
 
 
 {-|`location2messages` will be called when a change in the browser's URL is
